@@ -2,41 +2,55 @@
 <html lang="es">
 <head>
   <meta charset="UTF-8">
-  <title>Generador de Link WhatsApp</title>
+  <title>Generador de WhatsApp</title>
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
 
-  <!-- Librería QR -->
+  <!-- QR -->
   <script src="https://cdn.jsdelivr.net/npm/qrcodejs@1.0.0/qrcode.min.js"></script>
 
   <style>
     body {
       font-family: Arial, sans-serif;
-      min-height: 100vh;
-      margin: 0;
-      display: flex;
-      flex-direction: column;
-      background: #ffffff; /* Fondo blanco */
-    }
-
-    .container {
-      flex: 1;
+      background: #f2f2f2;
       display: flex;
       justify-content: center;
       align-items: center;
+      min-height: 100vh;
+      margin: 0;
+      padding: 15px;
     }
 
     .box {
       background: white;
       padding: 25px;
-      border-radius: 18px;
+      border-radius: 14px;
       width: 100%;
       max-width: 420px;
-      box-shadow: 0 18px 45px rgba(0,0,0,0.15);
+      box-shadow: 0 10px 30px rgba(0,0,0,0.1);
       text-align: center;
     }
 
     h2 {
       margin-bottom: 15px;
+    }
+
+    .tabs {
+      display: flex;
+      margin-bottom: 15px;
+    }
+
+    .tabs button {
+      flex: 1;
+      padding: 10px;
+      border: none;
+      cursor: pointer;
+      font-weight: bold;
+      background: #eaeaea;
+    }
+
+    .tabs button.active {
+      background: #25D366;
+      color: white;
     }
 
     input, textarea, button {
@@ -48,16 +62,19 @@
       font-size: 14px;
     }
 
-    button {
+    .action-btn {
       background: #25D366;
       color: white;
       border: none;
-      cursor: pointer;
       font-weight: bold;
+      cursor: pointer;
     }
 
-    .secondary {
-      background: #444;
+    .clear-btn {
+      background: #999;
+      color: white;
+      border: none;
+      cursor: pointer;
     }
 
     .link {
@@ -70,70 +87,95 @@
     }
 
     #qrcode {
-      margin: 15px 0;
+      margin-top: 15px;
     }
 
     footer {
-      text-align: center;
-      padding: 12px;
-      font-size: 13px;
+      margin-top: 15px;
+      font-size: 12px;
       color: #777;
-      border-top: 1px solid #eee;
+    }
+
+    @media (max-width: 480px) {
+      .box {
+        padding: 20px;
+      }
     }
   </style>
 </head>
 <body>
 
-<div class="container">
-  <div class="box">
-    <h2>Generador de WhatsApp 📱</h2>
+<div class="box">
+  <h2>Generador Link WhatsApp</h2>
 
-    <input type="text" id="phone" value="573002573965" placeholder="Número WhatsApp">
-
-    <textarea id="message" rows="4" placeholder="Ej: Quiero agendar el paquete básico..."></textarea>
-
-    <button onclick="generateLink()">Generar link y QR</button>
-
-    <div id="result" class="link" style="display:none;"></div>
-
-    <button id="copyBtn" style="display:none;" onclick="copyLink()">Copiar link</button>
-
-    <div id="qrcode"></div>
-
-    <button id="downloadBtn" class="secondary" style="display:none;" onclick="downloadQR()">
-      Descargar QR
-    </button>
+  <!-- Tabs -->
+  <div class="tabs">
+    <button id="tabLink" class="active" onclick="setMode('link')">Generar Link</button>
+    <button id="tabQR" onclick="setMode('qr')">Generar QR</button>
   </div>
+
+  <input type="text" id="phone" placeholder="Ej: 573001234567">
+  <textarea id="message" rows="4" placeholder="Ej: Quiero agendar el paquete básico..."></textarea>
+
+  <button class="action-btn" onclick="generate()">Generar</button>
+  <button class="clear-btn" onclick="clearData()">Borrar datos</button>
+
+  <div id="result" class="link" style="display:none;"></div>
+  <button id="copyBtn" style="display:none;" onclick="copyLink()">Copiar link</button>
+
+  <div id="qrcode"></div>
+
+  <footer>
+    Derechos de autor reservados · Jordi Orozco © 2026
+  </footer>
 </div>
 
-<footer>
-  Derechos de autor reservados &nbsp; Jordi Orozco © 2026
-</footer>
-
 <script>
+  let mode = "link";
   let currentLink = "";
 
-  function generateLink() {
+  function setMode(selected) {
+    mode = selected;
+    document.getElementById("tabLink").classList.remove("active");
+    document.getElementById("tabQR").classList.remove("active");
+
+    if (selected === "link") {
+      document.getElementById("tabLink").classList.add("active");
+      document.getElementById("qrcode").innerHTML = "";
+    } else {
+      document.getElementById("tabQR").classList.add("active");
+      document.getElementById("result").style.display = "none";
+      document.getElementById("copyBtn").style.display = "none";
+    }
+  }
+
+  function generate() {
     const phone = document.getElementById("phone").value;
     const message = encodeURIComponent(document.getElementById("message").value);
 
+    if (!phone || !message) {
+      alert("Completa número y mensaje");
+      return;
+    }
+
     currentLink = `https://wa.me/${phone}?text=${message}`;
 
-    const result = document.getElementById("result");
-    result.style.display = "block";
-    result.innerHTML = `<a href="${currentLink}" target="_blank">${currentLink}</a>`;
+    if (mode === "link") {
+      document.getElementById("result").style.display = "block";
+      document.getElementById("result").innerHTML =
+        `<a href="${currentLink}" target="_blank">${currentLink}</a>`;
+      document.getElementById("copyBtn").style.display = "block";
+      document.getElementById("qrcode").innerHTML = "";
+    }
 
-    document.getElementById("copyBtn").style.display = "block";
-    document.getElementById("downloadBtn").style.display = "block";
-
-    const qrContainer = document.getElementById("qrcode");
-    qrContainer.innerHTML = "";
-
-    new QRCode(qrContainer, {
-      text: currentLink,
-      width: 200,
-      height: 200
-    });
+    if (mode === "qr") {
+      document.getElementById("qrcode").innerHTML = "";
+      new QRCode(document.getElementById("qrcode"), {
+        text: currentLink,
+        width: 180,
+        height: 180
+      });
+    }
   }
 
   function copyLink() {
@@ -141,12 +183,13 @@
     alert("Link copiado ✅");
   }
 
-  function downloadQR() {
-    const qrImg = document.querySelector("#qrcode img") || document.querySelector("#qrcode canvas");
-    const link = document.createElement("a");
-    link.href = qrImg.src || qrImg.toDataURL("image/png");
-    link.download = "codigo-qr-whatsapp.png";
-    link.click();
+  function clearData() {
+    document.getElementById("phone").value = "";
+    document.getElementById("message").value = "";
+    document.getElementById("result").style.display = "none";
+    document.getElementById("copyBtn").style.display = "none";
+    document.getElementById("qrcode").innerHTML = "";
+    currentLink = "";
   }
 </script>
 
