@@ -1,196 +1,245 @@
 <!DOCTYPE html>
 <html lang="es">
 <head>
-  <meta charset="UTF-8">
-  <title>Generador de WhatsApp</title>
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta charset="UTF-8">
+<title>Agenda Fotográfica – Jordi Orozco</title>
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
 
-  <!-- QR -->
-  <script src="https://cdn.jsdelivr.net/npm/qrcodejs@1.0.0/qrcode.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
 
-  <style>
-    body {
-      font-family: Arial, sans-serif;
-      background: #f2f2f2;
-      display: flex;
-      justify-content: center;
-      align-items: center;
-      min-height: 100vh;
-      margin: 0;
-      padding: 15px;
-    }
-
-    .box {
-      background: white;
-      padding: 25px;
-      border-radius: 14px;
-      width: 100%;
-      max-width: 420px;
-      box-shadow: 0 10px 30px rgba(0,0,0,0.1);
-      text-align: center;
-    }
-
-    h2 {
-      margin-bottom: 15px;
-    }
-
-    .tabs {
-      display: flex;
-      margin-bottom: 15px;
-    }
-
-    .tabs button {
-      flex: 1;
-      padding: 10px;
-      border: none;
-      cursor: pointer;
-      font-weight: bold;
-      background: #eaeaea;
-    }
-
-    .tabs button.active {
-      background: #25D366;
-      color: white;
-    }
-
-    input, textarea, button {
-      width: 100%;
-      margin-bottom: 12px;
-      padding: 10px;
-      border-radius: 8px;
-      border: 1px solid #ccc;
-      font-size: 14px;
-    }
-
-    .action-btn {
-      background: #25D366;
-      color: white;
-      border: none;
-      font-weight: bold;
-      cursor: pointer;
-    }
-
-    .clear-btn {
-      background: #999;
-      color: white;
-      border: none;
-      cursor: pointer;
-    }
-
-    .link {
-      word-break: break-all;
-      background: #f1f1f1;
-      padding: 10px;
-      border-radius: 8px;
-      font-size: 13px;
-      margin-bottom: 10px;
-    }
-
-    #qrcode {
-      margin-top: 15px;
-    }
-
-    footer {
-      margin-top: 15px;
-      font-size: 12px;
-      color: #777;
-    }
-
-    @media (max-width: 480px) {
-      .box {
-        padding: 20px;
-      }
-    }
-  </style>
+<style>
+:root{
+  --main:#ffa031;
+  --agenda:#00bb2d;
+  --bg:#f3f3f3;
+  --card:rgba(255,255,255,.75);
+  --text:#222;
+}
+.dark{
+  --bg:#111;
+  --card:rgba(30,30,30,.75);
+  --text:#eee;
+}
+*{box-sizing:border-box}
+body{
+  margin:0;
+  font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto;
+  background:var(--bg);
+  color:var(--text);
+  min-height:100vh;
+  display:flex;
+  justify-content:center;
+  align-items:center;
+}
+.app{
+  width:100%;
+  max-width:420px;
+  padding:20px;
+  background:var(--card);
+  backdrop-filter:blur(18px);
+  border-radius:22px;
+  box-shadow:0 20px 40px rgba(0,0,0,.15);
+}
+h2{text-align:center}
+input,select,button{
+  width:100%;
+  padding:12px;
+  margin-bottom:10px;
+  border-radius:14px;
+  border:1px solid rgba(0,0,0,.15);
+  font-size:14px;
+}
+button{
+  background:var(--main);
+  border:none;
+  font-weight:600;
+  cursor:pointer;
+  transition:.2s;
+}
+button:hover{background:rgba(255,255,255,.1)}
+button.sec{background:#777;color:#fff}
+button.agenda{background:var(--agenda);color:#fff}
+.hidden{display:none}
+.session{
+  background:rgba(255,255,255,.65);
+  padding:12px;
+  border-radius:16px;
+  margin-top:10px;
+}
+.actions button{margin-top:6px}
+footer{text-align:center;font-size:12px;margin-top:12px;opacity:.7}
+.toggle{display:flex;justify-content:space-between;font-size:13px}
+.timeRow{display:flex;gap:6px}
+.separator{height:1px;background:rgba(0,0,0,.2);margin:15px 0}
+</style>
 </head>
+
 <body>
 
-<div class="box">
-  <h2>Generador Link WhatsApp</h2>
+<audio id="hoverSound">
+  <source src="https://assets.mixkit.co/sfx/preview/mixkit-select-click-1109.mp3">
+</audio>
 
-  <!-- Tabs -->
-  <div class="tabs">
-    <button id="tabLink" class="active" onclick="setMode('link')">Generar Link</button>
-    <button id="tabQR" onclick="setMode('qr')">Generar QR</button>
-  </div>
+<div class="app">
 
-  <input type="text" id="phone" placeholder="Ej: 573001234567">
-  <textarea id="message" rows="4" placeholder="Ej: Quiero agendar el paquete básico..."></textarea>
+<div class="toggle">
+  <span onclick="toggleTheme()">🌗 Claro / Oscuro</span>
+</div>
 
-  <button class="action-btn" onclick="generate()">Generar</button>
-  <button class="clear-btn" onclick="clearData()">Borrar datos</button>
+<h2>📸 Agenda Fotográfica</h2>
 
-  <div id="result" class="link" style="display:none;"></div>
-  <button id="copyBtn" style="display:none;" onclick="copyLink()">Copiar link</button>
+<input id="client" placeholder="👤 Nombre del cliente">
+<input id="phone" placeholder="📱 WhatsApp (Ej: 573001234567)">
+<input type="date" id="date">
 
-  <div id="qrcode"></div>
+<div class="timeRow">
+  <select id="hour"><option value="">Hora</option>
+    <script>for(let i=1;i<=12;i++)document.write(`<option>${i}</option>`)</script>
+  </select>
+  <select id="minute"><option>00</option><option>15</option><option>30</option><option>45</option></select>
+  <select id="ampm"><option>AM</option><option>PM</option></select>
+</div>
 
-  <footer>
-    Derechos de autor reservados · Jordi Orozco © 2026
-  </footer>
+<select id="type">
+  <option value="">📷 Tipo de sesión</option>
+  <option>💼 Profesional</option>
+  <option>🎉 Cumpleaños</option>
+  <option>👶 Bebé</option>
+  <option>🤰 Maternidad</option>
+  <option>👑 15 Años</option>
+</select>
+
+<input id="deposit" placeholder="💰 Anticipo">
+<input id="total" placeholder="💵 Valor total">
+
+<button onclick="save()">💾 Guardar sesión</button>
+<button class="sec" onclick="clearForm()">🧹 Limpiar</button>
+
+<div class="separator"></div>
+
+<button class="agenda" onclick="toggleList()">📋 Ver agendas</button>
+<button onclick="exportPDF()">📄 Descargar PDF</button>
+
+<div id="list" class="hidden"></div>
+
+<footer>Jordi Orozco © 2026</footer>
 </div>
 
 <script>
-  let mode = "link";
-  let currentLink = "";
+const sound=document.getElementById("hoverSound");
+sound.volume=0.2;
+document.addEventListener("mouseover",e=>{
+  if(e.target.tagName==="BUTTON"){sound.currentTime=0;sound.play().catch(()=>{})}
+});
+document.addEventListener("touchstart",e=>{
+  if(e.target.tagName==="BUTTON"){sound.currentTime=0;sound.play().catch(()=>{})}
+});
 
-  function setMode(selected) {
-    mode = selected;
-    document.getElementById("tabLink").classList.remove("active");
-    document.getElementById("tabQR").classList.remove("active");
+let editIndex=null;
 
-    if (selected === "link") {
-      document.getElementById("tabLink").classList.add("active");
-      document.getElementById("qrcode").innerHTML = "";
-    } else {
-      document.getElementById("tabQR").classList.add("active");
-      document.getElementById("result").style.display = "none";
-      document.getElementById("copyBtn").style.display = "none";
-    }
+function save(){
+  if(!client.value||!phone.value||!date.value||!type.value){
+    alert("Completa todos los campos");return
   }
+  const obj={
+    client:client.value,
+    phone:phone.value,
+    date:date.value,
+    time:`${hour.value}:${minute.value} ${ampm.value}`,
+    type:type.value,
+    deposit:deposit.value||"0",
+    total:total.value||"0"
+  };
+  let d=JSON.parse(localStorage.sessions||"[]");
+  editIndex!==null?(d[editIndex]=obj,editIndex=null):d.push(obj);
+  localStorage.sessions=JSON.stringify(d);
+  clearForm();load();
+}
 
-  function generate() {
-    const phone = document.getElementById("phone").value;
-    const message = encodeURIComponent(document.getElementById("message").value);
+function load(){
+  list.innerHTML="";
+  JSON.parse(localStorage.sessions||"[]").forEach((s,i)=>{
+    const msg=`Hola *${s.client.toUpperCase()}* 👋
 
-    if (!phone || !message) {
-      alert("Completa número y mensaje");
-      return;
-    }
+📸 *Sesión de Fotos*
+${s.type}
 
-    currentLink = `https://wa.me/${phone}?text=${message}`;
+📅 *Fecha:* ${s.date}
+⏰ *Hora:* ${s.time}
 
-    if (mode === "link") {
-      document.getElementById("result").style.display = "block";
-      document.getElementById("result").innerHTML =
-        `<a href="${currentLink}" target="_blank">${currentLink}</a>`;
-      document.getElementById("copyBtn").style.display = "block";
-      document.getElementById("qrcode").innerHTML = "";
-    }
+💰 *Anticipo:* ${s.deposit}
+💵 *Valor total:* ${s.total}
 
-    if (mode === "qr") {
-      document.getElementById("qrcode").innerHTML = "";
-      new QRCode(document.getElementById("qrcode"), {
-        text: currentLink,
-        width: 180,
-        height: 180
-      });
-    }
+📷 *Fotógrafo:* Jordi Orozco`;
+
+    const wa=`https://wa.me/${s.phone}?text=${encodeURIComponent(msg)}`;
+
+    list.innerHTML+=`
+    <div class="session">
+      👤 <b>${s.client}</b><br>
+      ${s.type}<br>
+      📅 ${s.date} ⏰ ${s.time}<br>
+      💰 ${s.deposit} | 💵 ${s.total}
+      <div class="actions">
+        <button onclick="edit(${i})">✏️ Editar</button>
+        <button onclick="del(${i})">🗑️ Eliminar</button>
+        <button onclick="window.open('${wa}')">📲 WhatsApp</button>
+        <button onclick="addCalendar(${i})">📅 Google Calendar</button>
+      </div>
+    </div>`;
+  });
+}
+
+function addCalendar(i){
+  const s=JSON.parse(localStorage.sessions)[i];
+  let [h,m,ap]=s.time.split(/[: ]/);
+  h=parseInt(h);
+  if(ap==="PM"&&h<12)h+=12;
+  if(ap==="AM"&&h===12)h=0;
+  const start=new Date(`${s.date}T${String(h).padStart(2,"0")}:${m}:00`);
+  const end=new Date(start.getTime()+3600000);
+  const f=d=>d.toISOString().replace(/-|:|\.\d+/g,"");
+  const url=`https://www.google.com/calendar/render?action=TEMPLATE
+&text=${encodeURIComponent("Sesión de Fotos - "+s.client)}
+&details=${encodeURIComponent(s.type+"\nAnticipo: "+s.deposit+"\nTotal: "+s.total+"\nFotógrafo: Jordi Orozco")}
+&dates=${f(start)}/${f(end)}`;
+  window.open(url,"_blank");
+}
+
+function edit(i){
+  const s=JSON.parse(localStorage.sessions)[i];
+  client.value=s.client;phone.value=s.phone;date.value=s.date;type.value=s.type;
+  deposit.value=s.deposit;total.value=s.total;
+  const t=s.time.split(/[: ]/);hour.value=t[0];minute.value=t[1];ampm.value=t[2];
+  editIndex=i;
+}
+function del(i){
+  if(confirm("¿Eliminar agenda?")){
+    let d=JSON.parse(localStorage.sessions);d.splice(i,1);
+    localStorage.sessions=JSON.stringify(d);load();
   }
-
-  function copyLink() {
-    navigator.clipboard.writeText(currentLink);
-    alert("Link copiado ✅");
-  }
-
-  function clearData() {
-    document.getElementById("phone").value = "";
-    document.getElementById("message").value = "";
-    document.getElementById("result").style.display = "none";
-    document.getElementById("copyBtn").style.display = "none";
-    document.getElementById("qrcode").innerHTML = "";
-    currentLink = "";
-  }
+}
+function clearForm(){
+  client.value=phone.value=date.value=deposit.value=total.value="";
+  hour.value=minute.value=ampm.value=type.value="";
+}
+function toggleList(){list.classList.toggle("hidden")}
+function toggleTheme(){document.body.classList.toggle("dark")}
+function exportPDF(){
+  const {jsPDF}=window.jspdf;
+  const pdf=new jsPDF();
+  pdf.text("Agenda Fotográfica - Jordi Orozco",10,10);
+  let y=20;
+  JSON.parse(localStorage.sessions||"[]").forEach(s=>{
+    pdf.text(`Cliente: ${s.client}`,10,y);
+    pdf.text(`Sesión: ${s.type}`,10,y+6);
+    pdf.text(`Fecha: ${s.date} Hora: ${s.time}`,10,y+12);
+    pdf.text(`Anticipo: ${s.deposit} Total: ${s.total}`,10,y+18);
+    y+=28;
+  });
+  pdf.save("agenda.pdf");
+}
+load();
 </script>
 
 </body>
