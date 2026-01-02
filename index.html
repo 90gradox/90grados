@@ -1,0 +1,154 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <title>Generador de Link WhatsApp</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+  <!-- Librería QR -->
+  <script src="https://cdn.jsdelivr.net/npm/qrcodejs@1.0.0/qrcode.min.js"></script>
+
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      min-height: 100vh;
+      margin: 0;
+      display: flex;
+      flex-direction: column;
+      background: #ffffff; /* Fondo blanco */
+    }
+
+    .container {
+      flex: 1;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+    }
+
+    .box {
+      background: white;
+      padding: 25px;
+      border-radius: 18px;
+      width: 100%;
+      max-width: 420px;
+      box-shadow: 0 18px 45px rgba(0,0,0,0.15);
+      text-align: center;
+    }
+
+    h2 {
+      margin-bottom: 15px;
+    }
+
+    input, textarea, button {
+      width: 100%;
+      margin-bottom: 12px;
+      padding: 10px;
+      border-radius: 8px;
+      border: 1px solid #ccc;
+      font-size: 14px;
+    }
+
+    button {
+      background: #25D366;
+      color: white;
+      border: none;
+      cursor: pointer;
+      font-weight: bold;
+    }
+
+    .secondary {
+      background: #444;
+    }
+
+    .link {
+      word-break: break-all;
+      background: #f1f1f1;
+      padding: 10px;
+      border-radius: 8px;
+      font-size: 13px;
+      margin-bottom: 10px;
+    }
+
+    #qrcode {
+      margin: 15px 0;
+    }
+
+    footer {
+      text-align: center;
+      padding: 12px;
+      font-size: 13px;
+      color: #777;
+      border-top: 1px solid #eee;
+    }
+  </style>
+</head>
+<body>
+
+<div class="container">
+  <div class="box">
+    <h2>Generador de WhatsApp 📱</h2>
+
+    <input type="text" id="phone" value="573002573965" placeholder="Número WhatsApp">
+
+    <textarea id="message" rows="4" placeholder="Ej: Quiero agendar el paquete básico..."></textarea>
+
+    <button onclick="generateLink()">Generar link y QR</button>
+
+    <div id="result" class="link" style="display:none;"></div>
+
+    <button id="copyBtn" style="display:none;" onclick="copyLink()">Copiar link</button>
+
+    <div id="qrcode"></div>
+
+    <button id="downloadBtn" class="secondary" style="display:none;" onclick="downloadQR()">
+      Descargar QR
+    </button>
+  </div>
+</div>
+
+<footer>
+  Derechos de autor reservados &nbsp; Jordi Orozco © 2026
+</footer>
+
+<script>
+  let currentLink = "";
+
+  function generateLink() {
+    const phone = document.getElementById("phone").value;
+    const message = encodeURIComponent(document.getElementById("message").value);
+
+    currentLink = `https://wa.me/${phone}?text=${message}`;
+
+    const result = document.getElementById("result");
+    result.style.display = "block";
+    result.innerHTML = `<a href="${currentLink}" target="_blank">${currentLink}</a>`;
+
+    document.getElementById("copyBtn").style.display = "block";
+    document.getElementById("downloadBtn").style.display = "block";
+
+    const qrContainer = document.getElementById("qrcode");
+    qrContainer.innerHTML = "";
+
+    new QRCode(qrContainer, {
+      text: currentLink,
+      width: 200,
+      height: 200
+    });
+  }
+
+  function copyLink() {
+    navigator.clipboard.writeText(currentLink);
+    alert("Link copiado ✅");
+  }
+
+  function downloadQR() {
+    const qrImg = document.querySelector("#qrcode img") || document.querySelector("#qrcode canvas");
+    const link = document.createElement("a");
+    link.href = qrImg.src || qrImg.toDataURL("image/png");
+    link.download = "codigo-qr-whatsapp.png";
+    link.click();
+  }
+</script>
+
+</body>
+</html>
